@@ -10,12 +10,12 @@ the image editing steps are recorded to provide a way to replicate the image pre
 
 ### 0.0.1 
 
-*basic console
-*exploration of converter and filter options in PIL
+* basic console
+* exploration of converter and filter options in PIL
 
 
 ### 0.0.11
 
-*scrapes all parameters via "tesseract --print-parameters" except page_separator
-*user set tesseract parameters are passed to pytesseract via config parameter
-*oem and psm are valid parameters as well
+* scrapes all parameters via "tesseract --print-parameters" except page_separator
+* user set tesseract parameters are passed to pytesseract via config parameter
+* oem and psm are valid parameters as well
