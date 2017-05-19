@@ -1,4 +1,4 @@
-# pier 0.0.12 - Python Image Edit Recorder
+# pier 0.0.12c - Python Image Edit Recorder
 
 pier aims to help scripted captcha solution. often the problem in hacking challenges is to solve a captcha under time constraints ( e.g. www.hackthis.co.uk ).
 using python scripts to solve these challenges with googles tesseract ocr require working out the steps to prepare the captcha for good ocr results beforehand.

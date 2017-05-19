@@ -17,7 +17,7 @@ class pier( cmd.Cmd ):
 	f_imgOut="temp"	
 	feh = None
 	imgIn=None
-	intro = "pier 0.0.12"
+	intro = "pier 0.0.12c"
 	prompt = "pier> "	
 	pyocr_params = []
 	pyocr_user_params = []
@@ -118,9 +118,13 @@ class pier( cmd.Cmd ):
 	def do_pytesseract( self, arg ):
 		param = ""
 		if( self.imgIn == None ): return None
-		for temp in self.pyocr_user_params: param += ( '-' + temp[ 0 ] + ' ' + temp[ 1 ] + ' ' )
+		for temp in self.pyocr_user_params:
+			if(( temp[ 0 ] == "oem" ) or ( temp[ 0 ] == "psm" )): 
+				param += ( '--' + temp[ 0 ] + ' ' + temp[ 1 ] + ' ' )
+			else:
+				param += ( '-c ' + temp[ 0 ] + '=' + temp[ 1 ] + ' ' )
 		print( "running with parameters: ", param )			
-		print( pytesseract.image_to_string( self.imgIn, config = param ))		
+		print( pytesseract.image_to_string( self.imgIn, config = param ))				
 	def do_quit( self, arg ):
 		sys.exit()		
 	def do_reload( self, arg ):
