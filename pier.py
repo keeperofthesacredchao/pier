@@ -4,7 +4,6 @@ from PIL import ImageOps
 from os import system
 
 import cmd
-import codecs
 import pickle
 import pytesseract
 import readline
@@ -17,7 +16,7 @@ class pier( cmd.Cmd ):
 	f_imgOut="temp"	
 	feh = None
 	imgIn=None
-	intro = "pier 0.0.12c"
+	intro = "pier 0.0.12d"
 	prompt = "pier> "	
 	pyocr_params = []
 	pyocr_user_params = []
@@ -27,12 +26,12 @@ class pier( cmd.Cmd ):
 		if( self.imgIn == None ): return None
 		self.imgIn = ImageOps.autocontrast( self.imgIn )		
 		self.record += [[ "autocontrast", arg ]]
-	def do_blur( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_blur( self , arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.BLUR )
 		self.record += [[ "bour", "" ]]
-	def do_contour( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_contour( self, arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.CONTOUR )
 		self.record += [[ "contour", "" ]]
 	def do_convertL( self, arg ):
@@ -47,20 +46,20 @@ class pier( cmd.Cmd ):
 		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.convert("1", dither = Image.NONE )
 		self.record += [[ "convert1", arg ]]
-	def do_detail( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_detail( self , arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.DETAIL )
 		self.record += [[ "detail", "" ]]
-	def do_edge_enhance( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_edge_enhance( self, arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.EDGE_ENHANCE )
 		self.record += [[ "edge_enhance", "" ]]		
-	def do_edge_enhance_more( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_edge_enhance_more( self, arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.EDGE_ENHANCE_MORE )
 		self.record += [[ "edge_enhance_more", "" ]]
-	def do_emboss( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_emboss( self , arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.EMBOSS )
 		self.record += [[ "emboss", "" ]]
 	def do_expand( self, arg ):
@@ -72,8 +71,8 @@ class pier( cmd.Cmd ):
 		if( self.imgIn == None ): return None 
 		temp = arg.split( ' ' )
 		for fl in temp: self.onecmd( fl )
-	def do_find_edges( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_find_edges( self , arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.FIND_EDGES )
 		self.record += [[ "find_edges", "" ]]
 	def do_invert( self, arg ):
@@ -86,7 +85,7 @@ class pier( cmd.Cmd ):
 		self.preloop()
 	def do_pyocr_gen_param_list( self, arg ):
 		system( "tesseract --print-parameters  > pyocr_param.txt" )
-		with codecs.open( "pyocr_param.txt" ) as f:
+		with open( "pyocr_param.txt" ) as f:
 			params = f.read().splitlines()
 		params.pop( 0 )
 		for param in params:
@@ -124,7 +123,7 @@ class pier( cmd.Cmd ):
 			else:
 				param += ( '-c ' + temp[ 0 ] + '=' + temp[ 1 ] + ' ' )
 		print( "running with parameters: ", param )			
-		print( pytesseract.image_to_string( self.imgIn, config = param ))				
+		print( pytesseract.image_to_string( self.imgIn, config = param ))
 	def do_quit( self, arg ):
 		sys.exit()		
 	def do_reload( self, arg ):
@@ -163,12 +162,12 @@ class pier( cmd.Cmd ):
 			self.feh.terminate()
 			self.feh.kill()	
 		self.feh = subprocess.Popen([ 'feh', self.f_imgOut + ".png" ])
-	def do_smooth( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_smooth( self, arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.SMOOTH )
 		self.record += [[ "smooth", "" ]]				
-	def do_smooth_more( self = None , arg = "" ):
-		if(( self == None ) or ( self.imgIn == None )): return None
+	def do_smooth_more( self, arg = "" ):
+		if( self.imgIn == None ): return None
 		self.imgIn = self.imgIn.filter( ImageFilter.SMOOTH_MORE )
 		self.record += [[ "smooth_more", "" ]]						
 	def postcmd( self, stop = False , line = "" ):
@@ -176,7 +175,7 @@ class pier( cmd.Cmd ):
 	def preloop( self ):
 		self.record = []
 		self.pyocr_params = [[ "psm", "7", "set page segmentation mode" ], [ "oem", "0", "set engine mode"]]
-		self.pyocr_user_params = [[ "psm", "7" ],[ "oem", "0" ]]					
+		self.pyocr_user_params = [[ "psm", "7" ],[ "oem", "0" ]]
 		if( self.b_generate_pyocr_params ):
 			print( "collect tesseract parameters.." )
 			self.do_pyocr_gen_param_list( "" )
