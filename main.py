@@ -17,7 +17,7 @@ class pier( cmd.Cmd ):
 	f_imgOut="temp"	
 	feh = None
 	imgIn=None
-	intro = "pier 0.0.1"
+	intro = "pier 0.0.12"
 	prompt = "pier> "	
 	pyocr_params = []
 	pyocr_user_params = []
@@ -80,6 +80,10 @@ class pier( cmd.Cmd ):
 		if( self.imgIn == None ): return None
 		self.imgIn = ImageOps.invert( self.imgIn )
 		self.record += [[ "invert", arg ]]
+	def do_load( self, arg ):
+		if( arg == "" ): return None
+		self.f_imgIn = arg
+		self.preloop()
 	def do_pyocr_gen_param_list( self, arg ):
 		system( "tesseract --print-parameters  > pyocr_param.txt" )
 		with codecs.open( "pyocr_param.txt" ) as f:
@@ -87,7 +91,7 @@ class pier( cmd.Cmd ):
 		params.pop( 0 )
 		for param in params:
 			temp = param.split()
-			if( temp[ 0 ] != "page_separator" ):  self.pyocr_params+= [ temp.pop( 0 ), temp.pop( 0 ), " ".join( temp )]
+			if( temp[ 0 ] != "page_separator" ):  self.pyocr_params+= [[ temp.pop( 0 ), temp.pop( 0 ), " ".join( temp )]]
 	def do_pyocr_param_get( self, arg ):
 		for param in self.pyocr_params: 
 			if( arg == param[0]):
@@ -98,16 +102,18 @@ class pier( cmd.Cmd ):
 		temp = arg.split( ' ' )
 		for param in self.pyocr_params:
 			if( temp[0] == param[0] ):
+				temp.pop( 0 )
+				temp = " ".join( temp )
+				param[ 1 ] = temp
 				for user_param in self.pyocr_user_params:
-					if( user_param[0] == temp[0] ): self.pyocr_user_params.remove( user_param )		
-				self.pyocr_user_params += [ temp.pop( 0 ), " ".join( temp )]
-				param_new = [param[ 0 ], arg, param[ 2 ]]
-				self.pyocr_params.remove( param )
-				self.pyocr_params.append( param_new )
+					if( user_param[0] == param[0] ): 
+						user_param[ 1 ] = temp
+						return None
+				self.pyocr_user_params += [[ param[ 0 ], param[ 1 ]]]
 				return None
 		print( "parameter '{}' not found!".format( temp[ 0 ]))
 	def do_pyocr_param_list( self, arg ):
-		for param in self.pyocr_params: print( param[0], " ", end='' )
+		for param in self.pyocr_params: print( param[ 0 ], " ", end='' )
 		print()
 	def do_pytesseract( self, arg ):
 		param = ""
@@ -132,13 +138,13 @@ class pier( cmd.Cmd ):
 		self.pyocr_user_params = replay[ 1 ]
 		for x in temp: self.onecmd( x[ 0 ] + " " +  x[ 1 ])
 		self.do_save( "" )
-		self.do_show( "" )
 	def do_resize( self, arg ):
 		if(( self.imgIn == None ) or ( arg == "" )): return None
 		self.imgIn = self.imgIn.resize(( self.imgIn.width * int( arg ), self.imgIn.height * int( arg )), Image.ANTIALIAS )
 		self.record += [[ "resize", arg ]]
 	def do_save( self, arg ):
 		if(( self.imgIn == None ) or  ( self.f_imgOut == None )): return None
+		if( arg != "" ): self.f_imgOut = arg
 		self.imgIn.save( self.f_imgOut + ".png", quality = 100 )
 		temp = open( self.f_imgOut + ".rec", "wb" )
 		pickle.dump([ self.record, self.pyocr_user_params ], temp, protocol = 0 )
@@ -162,19 +168,28 @@ class pier( cmd.Cmd ):
 		self.imgIn = self.imgIn.filter( ImageFilter.SMOOTH_MORE )
 		self.record += [[ "smooth_more", "" ]]						
 	def postcmd( self, stop = False , line = "" ):
-		print( "f: {} | r: {} ".format( self.f_imgIn, self.record ))
+		print( "f: {} | p: {} | r: {}".format( self.f_imgIn, self.pyocr_user_params, self.record ))
 	def preloop( self ):
 		self.record = []
-		self.pyocr_params = [[ "psm", "7", "set page segmentation mode" ]]
-		self.pyocr_user_params = [[ "psm", "7"]]
+		self.pyocr_params = [[ "psm", "7", "set page segmentation mode" ], [ "oem", "0", "set engine mode"]]
+		self.pyocr_user_params = [[ "psm", "7" ],[ "oem", "0" ]]					
 		if( self.b_generate_pyocr_params ):
 			print( "collect tesseract parameters.." )
 			self.do_pyocr_gen_param_list( "" )
 		if( self.f_imgIn ):
 			self.imgIn = Image.open( self.f_imgIn )	
 			self.imgIn.save( self.f_imgOut + ".png", quality = 100 )
-			self.do_show( None )	
 		
 					
 if __name__=="__main__":
-	pier().cmdloop()
+		
+	sys.argv.pop( 0 )	
+	
+	if( len( sys.argv ) == 0 ):
+		pier().cmdloop()
+		sys.exit()
+	
+	p = pier()
+	p.do_load( sys.argv.pop( 0 ))
+	p.do_replay( sys.argv.pop( 0 ))
+	p.do_save( sys.argv.pop( 0 ))
