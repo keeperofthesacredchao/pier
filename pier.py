@@ -16,7 +16,7 @@ class pier( cmd.Cmd ):
 	f_imgOut="temp"	
 	feh = None
 	imgIn=None
-	intro = "pier 0.0.12d"
+	intro = "pier 0.0.13"
 	prompt = "pier> "	
 	pyocr_params = []
 	pyocr_user_params = []
@@ -84,7 +84,7 @@ class pier( cmd.Cmd ):
 		self.f_imgIn = arg
 		self.preloop()
 	def do_pyocr_gen_param_list( self, arg ):
-		system( "tesseract --print-parameters  > pyocr_param.txt" )
+		system( "tesseract --print-parameters --tessdata-dir /usr/share/tessdata > pyocr_param.txt" )
 		with open( "pyocr_param.txt" ) as f:
 			params = f.read().splitlines()
 		params.pop( 0 )
@@ -118,7 +118,7 @@ class pier( cmd.Cmd ):
 		param = ""
 		if( self.imgIn == None ): return None
 		for temp in self.pyocr_user_params:
-			if(( temp[ 0 ] == "oem" ) or ( temp[ 0 ] == "psm" )): 
+			if(( temp[ 0 ] == "oem" ) or ( temp[ 0 ] == "psm" ) or ( temp[ 0 ]  == "tessdata-dir" )): 
 				param += ( '--' + temp[ 0 ] + ' ' + temp[ 1 ] + ' ' )
 			else:
 				param += ( '-c ' + temp[ 0 ] + '=' + temp[ 1 ] + ' ' )
@@ -174,8 +174,8 @@ class pier( cmd.Cmd ):
 		print( "f: {} | p: {} | r: {}".format( self.f_imgIn, self.pyocr_user_params, self.record ))
 	def preloop( self ):
 		self.record = []
-		self.pyocr_params = [[ "psm", "7", "set page segmentation mode" ], [ "oem", "0", "set engine mode"]]
-		self.pyocr_user_params = [[ "psm", "7" ],[ "oem", "0" ]]
+		self.pyocr_params = [[ "psm", "7", "set page segmentation mode" ], [ "oem", "1", "set engine mode"], [ "tessdata-dir", "/usr/share/tessdata/",  "Specify the location of tessdata path." ]]
+		self.pyocr_user_params = [[ "psm", "7" ],[ "oem", "1" ], [ "tessdata-dir", "/usr/share/tessdata/" ]]
 		if( self.b_generate_pyocr_params ):
 			print( "collect tesseract parameters.." )
 			self.do_pyocr_gen_param_list( "" )

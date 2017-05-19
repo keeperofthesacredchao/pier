@@ -1,4 +1,4 @@
-# pier 0.0.12d - Python Image Edit Recorder
+# pier 0.0.13 - Python Image Edit Recorder
 
 pier aims to help scripted captcha solution. often the problem in hacking challenges is to solve a captcha under time constraints ( e.g. www.hackthis.co.uk ).
 using python scripts to solve these challenges with googles tesseract ocr require working out the steps to prepare the captcha for good ocr results beforehand.
@@ -7,6 +7,12 @@ the image editing steps are recorded to provide a way to replicate the image pre
 
 
 ## Versioning
+
+### 0.0.13
+
+* included tessdata-dir tesseract param. default is "/usr/share/tessdata/". this resolves #15
+* oem default set to 1
+* pier works now with tesseract 4.00.00alpha
 
 ### 0.0.12
 
