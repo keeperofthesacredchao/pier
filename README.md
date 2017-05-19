@@ -8,6 +8,12 @@ the image editing steps are recorded to provide a way to replicate the image pre
 
 ## Versioning
 
+### 0.0.12
+
+* save / load / replay record done
+* loading and replaying record from command line  with custom source / destination now possible
+* some issues fixed
+
 ### 0.0.11
 
 * scrapes all parameters via "tesseract --print-parameters" except page_separator
