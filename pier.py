@@ -17,7 +17,7 @@ class pier( cmd.Cmd ):
 	feh = None
 	imgIn=None
 	intro = "pier 0.0.13a"
-	prompt = "pier> "	
+	self.prompt = "pier> "	
 	pyocr_params = []
 	pyocr_user_params = []
 	record = []
