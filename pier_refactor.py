@@ -14,15 +14,6 @@ ocr_param = dict( #used to store tesseract parameters
 	help = int( 2 ), #help text
 	value = int( 1 )) #value as string
 
-#pierCfg currently only as Pier.pc reference
-#pierCfg = dict( #config dictionary of Pier class object
-#	ocr_param_gen = 0, 
-#	cur = 1, 
-#	fileIn = 2, 
-#	fileTemp = 3, 
-#	intro = 4,	
-#	viewer = 5 ) 
-
 ocr_record = dict( #one record equals one image manipulation / Pier object configuration step by pier
 	cmd = 0, #string containing a pier edit session command
 	args = 1 ) #arguments as string, divided by single space
@@ -34,12 +25,17 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			'cur': None, #handle to current PIL Image object
 			'fileIn': '', #source file name including path and extension
 			'fileTemp': 'temp', #file name of temporary data files ( s_FileTemp.rec, s_FileTemp.img )
-			'intro': 'pier v.0.0.14-ref', #text shown on pier edit session startup
+			'intro': '\npier v.0.0.14\npress <tab> twice for command list. type "? [ command ]" for help', #text shown on pier edit session startup
 			'viewer': 'feh' } #name of extern image viewer. needs to be executable on command line
 	record = [] #record of the steps from the source image to the current state of the temporary image		
 	viewer = None #handle to currently active image viewer process
 
-	def do_autocontrast( self, arg ): #calls PIL.ImageOps.autocontrast. syntax: autocontrast  [ cutoff [ ignore ]]
+	def do_autocontrast( self, arg ): 
+		"""
+		syntax: autocontrast  [ CUTOFF [ IGNORE ]]
+		
+		calls PIL.ImageOps.autocontrast for the current image. 
+		"""
 		if( self.pc[ 'cur' ] == None ):
 			print( 'no image loaded' )
 			return
@@ -53,7 +49,7 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			cutoff = int( param[ 0 ])
 			if( count == 2 ): ignore = int( param[ 1 ])
 			else:
-				print( 'syntax: autocontrast  [ cutoff [ ignore ]]' )
+				print( 'syntax: autocontrast  [ CUTOFF [ IGNORE ]]' )
 				return
 		else: cutoff = 0
 
@@ -65,8 +61,13 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			return
 			
 		self.record += [[ 'autocontrast', arg ]]
-	def do_convert( self, arg ): #calls PIL.Image.convert. syntax: convert mode 
-		#valid modes: 1, L, P, RGB, RGBA, CMYK, YCbCr,  LAB, HSV, I, F
+	def do_convert( self, arg ):
+		"""
+		syntax: convert MODE 
+		
+		calls PIL.Image.convert on current image. 		
+		valid modes: 1, L, P, RGB, RGBA, CMYK, YCbCr,  LAB, HSV, I, F		
+		"""
 		if( self.pc[ 'cur' ] == None ):
 			print( 'no image loaded' )
 			return
@@ -77,7 +78,7 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 		else: count = 0		
 		
 		if( count == 0 or len ( param ) > 1 ): #check for syntax
-			print( 'syntax: convert mode ' )
+			print( 'syntax: convert MODE ' )
 			return
 		
 		try: self.pc[ 'cur' ]  = self.pc[ 'cur' ].convert( param[ 0 ], dither = Image.NONE ) #floyd-steinberg dither gives no good results for captchas
@@ -86,7 +87,12 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			return
 		
 		self.record += [[ 'convert', arg ]]
-	def do_get( self, arg ): #get current value of ocr parameter <arg>
+	def do_get( self, arg ): 
+		"""
+		syntax: get PARAMETER
+		
+		get current value of ocr parameter PARAMETER. 
+		"""
 		
 		for param in self.op_user: #search in user set parameter
 			if( param[ ocr_param[ 'name' ]] == arg ):
@@ -100,7 +106,12 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 				
 		print( 'parameter "{}" not found'.format( arg ))
 		
-	def do_invert( self, arg ): #inverts current image. syntax: invert
+	def do_invert( self, arg ): 
+		"""
+		syntax: invert
+		
+		inverts current image. 
+		"""
 		try: self.pc[ 'cur' ] = ImageOps.invert( self.pc[ 'cur' ])
 		except ( AttributeError, IOError ) as err: 
 			print( err )
@@ -108,19 +119,29 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			
 		self.record += [[ 'invert', arg ]]	
 		
-	def do_list_ocr_params( self, arg ): #list all loaded ocr parameter		
+	def do_list_ocr_params( self, arg ): 
+		"""
+		syntax: list_ocr_params
+		
+		list loaded ocr parameter
+		"""
 		for param in self.op_tess: print( '{} '.format( param[ ocr_param[ 'name' ]]), end = '' )		
 		print( '\n{} parameter loaded'.format( len( self.op_tess )))
 		
-	def do_load( self, arg ): 
-		#load image file <arg> as current <Pier> object image. if <arg> is '', config param <fileIn> is used.
-		# tries to load the record file '<arg>.rec' if existing. returns True if image is loaded, otherwise False.
+	def do_load( self, arg ): #returns True if image is loaded, otherwise False.
+		"""
+		syntax: load [ IMAGEFILE ]
 		
-		if( arg == '' ): imgFile = self.pc[ 'fileIn' ]			
-		else: imgFile = arg
-		
-		try: img = Image.open( imgFile ) #open image file
-		except IOError as err:
+		load image file IMAGEFILE as current image. 
+		if IMAGEFILE is omitted, config param <fileIn> is used. 
+		tries to load the record file 'IMAGEFILE.rec' if existing. 
+		"""
+			
+		try: 
+			if( arg == '' ): imgFile = self.pc[ 'fileIn' ]			
+			else: imgFile = arg			
+			img = Image.open( imgFile ) #open image file
+		except ( IOError, AttributeError ) as err:
 			 print( err )
 			 return False
 		
@@ -152,7 +173,13 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 		self.do_replay( '' )
 		
 		return True
-	def do_load_ocr_params( self, arg ): #runs the system tesseract command and scrapes the parameters available for use in pier
+	def do_load_ocr_params( self, arg ):
+		"""
+		syntax: load_ocr_params
+		
+		runs the system tesseract command and scrapes the parameters available for use in pier.
+		by default this happens on startup.
+		"""
 		print( 'loading ocr parameter..', end = '' )
 		system( "tesseract --print-parameters --tessdata-dir /usr/share/tessdata > pyocr_param.txt" ) #run tesseract and store output in pyocr_params.txt
 		
@@ -173,10 +200,17 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 		
 		print( len( self.op_tess ))
 		
-	def do_quit( self, arg ): #stop execution
+	def do_quit( self, arg ):
+		"""stop execution"""
 		sys.exit()        
 		
-	def do_replay( self, arg ): #if arg is an empty string, replay of record is run on current image. if arg is set the image file 'arg' ( and its record if existing ) is loaded before running the replay.
+	def do_replay( self, arg ): 
+		"""
+		syntax: replay [ IMAGEFILE ]
+		
+		if IMAGEFILE is an empty string, replay of record is run on current image. 		
+		if IMAGEFILE is set the image file with this name ( and its mandatory record file 'IMAGEFILE.rec' ) is loaded before running the replay.		
+		"""
 		if( arg ): 
 			if( self.do_load( arg ) == False ):	#try to load image specified by param <arg>
 				print( 'could not load image - replay aborted' )
@@ -189,7 +223,12 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			print( 'replay "{} {}"'.format( entry[ ocr_record[ 'cmd' ]], entry[ ocr_record[ 'args' ]]))
 			self.onecmd( entry[ ocr_record[ 'cmd' ]] + ' ' + entry[ ocr_record[ 'args' ]])
 			
-	def do_resize( self, arg ): #scales the current image by factor <arg>
+	def do_resize( self, arg ): 
+		"""
+		syntax: scale FACTOR
+		
+		scales the current image by float FACTOR
+		"""
 		scale = float( arg )
 		try: self.pc[ 'cur' ] = self.pc[ 'cur' ].resize(( int( scale * self.pc[ 'cur' ].width ), int( scale * self.pc[ 'cur' ].height )), Image.ANTIALIAS )
 		except AttributeError as err:
@@ -197,8 +236,14 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			return
 			
 		self.record += [[ 'resize', arg ]]			
-	def do_save( self, arg ):	#saves record and config in config param '<fileTemp> + .png.rec' and current image in '<fileTemp> + .png' if arg is ''.
-											#saves the current image as '<arg> + .png' if arg is a string of non zero length and stores config / record in '<arg> + .png.rec' otherwise
+	def do_save( self, arg ):	
+		"""
+		syntax: save FILENAME
+		
+		saves image.		
+		if FILENAME is omitted: saves record and config in config param '<fileTemp> + .png.rec' and current image in '<fileTemp> + .png'.
+		otherwise: saves config / record in 'FILENAME + .png.rec' and current image as 'FILENAME + .png'.		
+		"""
 		if( arg != '' and self.pc[ 'cur' ] == None ):	
 			print( 'no image loaded' )
 			return
@@ -217,7 +262,12 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			 return
 
 		print( 'files "{}.png" and "{}.png.rec" saved'.format( sfile, sfile ))
-	def do_set(  self, arg ): #set ocr parameter. syntax: set parameter value
+	def do_set(  self, arg ): 
+		"""
+		syntax: set parameter value
+		
+		set ocr parameter. 		
+		"""
 		args = arg.split( ' ' )
 		
 		if( len( args ) < 1 or len( args ) > 2 ): #check for syntax
@@ -235,8 +285,29 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 				return				
 				
 		print( 'parameter "{}" not found'.format( args[ 0 ]))
-							
-	def do_show( self, arg ): #show image <arg> with viewer set in config param <viewer>. if <arg> is '', config param <cur> is used
+		
+	def do_set_viewer( self, arg ):
+		"""
+		syntax: set_viewer VIEWER
+		
+		sets the viewer to be run in the command line on a <show> command. 
+		"""
+		if( arg == '' ): #no viewer specified
+			print( 'argument VIEWER is mandatory' )
+			return
+			
+		self.pc[ 'viewer' ] = arg
+		
+		print( 'viewer "{}" set'.format( arg ))
+		
+	def do_show( self, arg ):
+		"""
+		syntax: show [ IMAGEFILE ]
+		
+		show image IMAGEFILE with viewer set in config param <viewer>. 
+		
+		if IMAGEFILE is omitted, the current image is used.
+		"""
 		if( self.viewer != None ): #close last instance
 			self.viewer.terminate()
 			self.viewer.kill()
@@ -252,7 +323,14 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			print( err )
 			return			
 			
-	def do_tesseract( self, arg = 'cur' ): #runs tesseract on image depending on <arg>:  'cur' uses config param <cur>
+	def do_tesseract( self, arg = 'cur' ): 
+		"""
+		syntax: tesseract [ cur | IMAGEFILE ]
+		
+		runs tesseract on image depending on argument	
+		'cur' uses config param <cur>
+		otherwise: IMAGEFILE is the image file to run tesseract on		
+		"""
 		if( arg != '' ): imgFile = arg #'FILE' uses FILE+.png
 		else: imgFile = self.pc[ 'fileTemp' ] #'' uses config param <fileTemp>
 		
@@ -285,7 +363,7 @@ class Pier( cmd.Cmd ): #main class handling pier edit sessions and replays from 
 			self.pc[ 'cur' ] = None
 			
 	def postcmd( self, stop, line ): #used to prompt pier status info	
-		print( '\nparameter: {} | fileIn: "{}" | record: {}'.format( self.op_user, self.pc[ 'fileIn' ], self.record )) 
+		print( '\nparameter: {} | fileIn: "{}" | fileTemp: {} | viewer: "{}" | record: {}'.format( self.op_user, self.pc[ 'fileIn' ], self.pc[ 'fileTemp' ], self.pc[ 'viewer' ], self.record )) 
 	def preloop( self ):
 		self.init()
 		self.postcmd( False, 0 )
